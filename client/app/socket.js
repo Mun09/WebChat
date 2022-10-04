@@ -7,10 +7,16 @@ function socket_communication() {
   const form = document.getElementById("form")
   
   const socket = io('http://localhost:3000')
+  const userSocket = io('http://localhost:3000/user', {auth: {token: "Test"}})
+
   socket.on("connect", () => {
     console.log('connected');
     displayMessage(`You connected with id: ${socket.id}`);
   })  
+
+  userSocket.on('connect_error', error => {
+    displayMessage(error)
+  })
   
   socket.on("received-message", (message) =>{
     displayMessage(message)
@@ -41,6 +47,12 @@ function socket_communication() {
     document.getElementById("message-container").append(msg)
   }
 }
+
+document.addEventListener('keydown', e => {
+  if(e.target.matches('input')) return
+  // if(e.key === "c") socket.connect()
+  // if(e.key === "d") socket.disconnect()
+})
 
 if(module.hot) {
   module.hot.accept()

@@ -1,9 +1,38 @@
-const {instrument} = require('@socket.io/admin-ui')
-const io = require('socket.io')(3000, {
+const { instrument } = require('@socket.io/admin-ui')
+const { Server } = require("socket.io")
+const { createServer } = require("http")
+
+const httpServer = createServer()
+
+const io = new Server(httpServer, {
   cors: {
     origin: ["http://localhost:8080", "https://admin.socket.io"],
+    credentials: true
   }
-});
+})
+instrument(io, {
+  auth: false
+})
+httpServer.listen(3000)
+
+const userIo = io.of("/user")
+userIo.on('connection', socket => {
+  console.log("connected to user namespace with username " + socket.username)
+})
+
+userIo.use((socket, next) => {
+  if(socket.handshake.auth.token) {
+    socket.username = getUsernameFromToken(socket.handshake.auth.token)
+    next()
+  } else {
+    next(new Error("Please send token"))
+  }
+})
+
+function getUsernameFromToken(token) {
+  return token
+}
+
 
 io.on('connection', socket => {
   console.log(socket.id);
@@ -20,4 +49,3 @@ io.on('connection', socket => {
   })
 })
 
-instrument(io, { auth: false })
